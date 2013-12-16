@@ -125,13 +125,13 @@ CSSのようなハイフン(-)区切りをキャメルケースにする
 #<$C_CLB_PYTHON/>
 // camelize
 print(getSelectedText().toLowerCase().replace(/-(.)/g, function(a, b) {
-return b.toUpperCase();
+  return b.toUpperCase();
 }));
 ```
 
 例:
 
-    `list-style-type` → `listStyleType`
+`list-style-type` → `listStyleType`
 
 ----
 選択範囲のすべての空白を切り詰め
@@ -140,11 +140,11 @@ return b.toUpperCase();
 #<$C_CLB_PYTHON/>
 // 選択範囲のすべての空白を切り詰め
 withClipboard(function() {
-sleep(200);
-this.copy();
-var text = this.get();
-text = text.replace(/[ \t\u3000]{2,}/g, ' ').replace(/(?:\r\n|\r|\n){2,}/g, '\n');
-print(text);
+  sleep(200);
+  this.copy();
+  var text = this.get();
+  text = text.replace(/[ \t\u3000]{2,}/g, ' ').replace(/(?:\r\n|\r|\n){2,}/g, '\n');
+  print(text);
 });
 ```
 
@@ -172,8 +172,10 @@ README (今見てるこれ) を表示する
 // Open README
 var url = 'https://github.com/polygonplanet/Clibor-Macro-for-JavaScript/blob/master/README.md';
 var req = new XMLHttpRequest();
+
 req.open('GET', url, false);
 req.send(null);
+
 var content = req.responseText;
 var readmeHTML = content.match(/<article[^>]*>([\s\S]*?)<\/article>/i)[1];
 var readmeText = readmeHTML.replace(/<\S[^>]*>/g, '');
@@ -188,11 +190,11 @@ HTMLタグの除去 (少し細かく)
 var text = getSelectedText();
 
 text = [
-[/<!-*[\s\S]*?->|<!\s*\w+[^>]*>/g, ''],
-[/<\s*(\w+)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/g, ' $2 '],
-[/<[^>]*>|<[![\]-]*|[-[\]]*>/g, '']
+  [/<!-*[\s\S]*?->|<!\s*\w+[^>]*>/g, ''],
+  [/<\s*(\w+)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/g, ' $2 '],
+  [/<[^>]*>|<[![\]-]*|[-[\]]*>/g, '']
 ].reduce(function(html, item) {
-return html.replace(item[0], item[1]);
+  return html.replace(item[0], item[1]);
 }, text);
 
 print(text);
@@ -202,12 +204,12 @@ print(text);
 
 ```html
 <html><head>
-<meta charset="utf-8">
-<title>タイトル</title>
+  <meta charset="utf-8">
+  <title>タイトル</title>
 </head>
 <body>
-<div>こんにちは！</div>
-<script language="日本語">ようこそ！私のホームページへ！</script>
+  <div>こんにちは！</div>
+  <script language="日本語">ようこそ！私のホームページへ！</script>
 </body>
 </html>
 ```
