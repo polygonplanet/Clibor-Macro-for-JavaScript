@@ -29,11 +29,11 @@ Python を入れてない場合、[公式の解説][2] 通りにインストー�
  を、Clibor.exe と同階層にコピーします。
  3. 「jsmacro.clip.bat」をエディタ等で開き、
 
-    ```dos  
-    rem ---Set your python directory---  
-    set PYTHON_DIR=C:\Python27  
-    rem -------------------------------  
-    ```
+```dos
+rem ---Set your python directory---
+set PYTHON_DIR=C:\Python27
+rem -------------------------------
+```
 
  3行目あたり、上の Python パスを自分の環境に合わせます。
 
@@ -47,8 +47,10 @@ Python を入れてない場合、[公式の解説][2] 通りにインストー�
 
 「新規作成」で編集画面を開き、以下のコードを貼り付けて保存します。
 
-    #<$C_CLB_PYTHON/>
-    alert('test'.toUpperCase());
+```javascript
+#<$C_CLB_PYTHON/>
+alert('test'.toUpperCase());
+```
 
 1行目は、本来 Python で動くのをトラップするために必要です。
 
@@ -115,31 +117,32 @@ JavaScript としては非常に古く、ECMAScript の仕様にもあまり準�
 
 CSSのようなハイフン(-)区切りをキャメルケースにする
 
-    ```javascript
-    #<$C_CLB_PYTHON/>
-    // camelize
-    print(getSelectedText().toLowerCase().replace(/-(.)/g, function(a, b) {
-      return b.toUpperCase();
-    }));
-    ```
+```javascript
+#<$C_CLB_PYTHON/>
+// camelize
+print(getSelectedText().toLowerCase().replace(/-(.)/g, function(a, b) {
+return b.toUpperCase();
+}));
+```
 
 例:
+
     `list-style-type` → `listStyleType`
 
 ----
 選択範囲のすべての空白を切り詰め
 
-    ```javascript
-    #<$C_CLB_PYTHON/>
-    // 選択範囲のすべての空白を切り詰め
-    withClipboard(function() {
-      sleep(200);
-      this.copy();
-      var text = this.get();
-      text = text.replace(/[ \t\u3000]{2,}/g, ' ').replace(/(?:\r\n|\r|\n){2,}/g, '\n');
-      print(text);
-    });
-    ```
+```javascript
+#<$C_CLB_PYTHON/>
+// 選択範囲のすべての空白を切り詰め
+withClipboard(function() {
+sleep(200);
+this.copy();
+var text = this.get();
+text = text.replace(/[ \t\u3000]{2,}/g, ' ').replace(/(?:\r\n|\r|\n){2,}/g, '\n');
+print(text);
+});
+```
 
 例:
 
@@ -160,50 +163,50 @@ CSSのようなハイフン(-)区切りをキャメルケースにする
 ----
 README (今見てるこれ) を表示する
 
-    ```javascript
-    #<$C_CLB_PYTHON/>
-    // Open README
-    var url = 'https://github.com/polygonplanet/Clibor-Macro-for-JavaScript/blob/master/README.md';
-    var req = new XMLHttpRequest();
-    req.open('GET', url, false);
-    req.send(null);
-    var content = req.responseText;
-    var readmeHTML = content.match(/<article[^>]*>([\s\S]*?)<\/article>/i)[1];
-    var readmeText = readmeHTML.replace(/<\S[^>]*>/g, '');
-    alert(readmeText);
-    ```
+```javascript
+#<$C_CLB_PYTHON/>
+// Open README
+var url = 'https://github.com/polygonplanet/Clibor-Macro-for-JavaScript/blob/master/README.md';
+var req = new XMLHttpRequest();
+req.open('GET', url, false);
+req.send(null);
+var content = req.responseText;
+var readmeHTML = content.match(/<article[^>]*>([\s\S]*?)<\/article>/i)[1];
+var readmeText = readmeHTML.replace(/<\S[^>]*>/g, '');
+alert(readmeText);
+```
 
 ----
 HTMLタグの除去 (少し細かく)
 
-    ```javascript
-    #<$C_CLB_PYTHON/>
-    var text = getSelectedText();
-    
-    text = [
-      [/<!-*[\s\S]*?->|<!\s*\w+[^>]*>/g, ''],
-      [/<\s*(\w+)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/g, ' $2 '],
-      [/<[^>]*>|<[![\]-]*|[-[\]]*>/g, '']
-    ].reduce(function(html, item) {
-      return html.replace(item[0], item[1]);
-    }, text);
-    
-    print(text);
-    ```
+```javascript
+#<$C_CLB_PYTHON/>
+var text = getSelectedText();
+
+text = [
+[/<!-*[\s\S]*?->|<!\s*\w+[^>]*>/g, ''],
+[/<\s*(\w+)\b[^>]*>([\s\S]*?)<\s*\/\s*\1\s*>/g, ' $2 '],
+[/<[^>]*>|<[![\]-]*|[-[\]]*>/g, '']
+].reduce(function(html, item) {
+return html.replace(item[0], item[1]);
+}, text);
+
+print(text);
+```
 
 例:
 
-    ```html
-    <html><head>
-    <meta charset="utf-8">
-    <title>タイトル</title>
-    </head>
-    <body>
-    <div>こんにちは！</div>
-    <script language="日本語">ようこそ！私のホームページへ！</script>
-    </body>
-    </html>
-    ```
+```html
+<html><head>
+<meta charset="utf-8">
+<title>タイトル</title>
+</head>
+<body>
+<div>こんにちは！</div>
+<script language="日本語">ようこそ！私のホームページへ！</script>
+</body>
+</html>
+```
 
 ↓
 
