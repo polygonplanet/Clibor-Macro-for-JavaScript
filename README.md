@@ -15,6 +15,10 @@ Clibor-Macro-for-JavaScript
 一部の機能で Python を使用しています。  
 Python を入れてない場合、[公式の解説][2] 通りにインストールしてください。
 
+## ダウンロード
+
+[jsmacro.zip][5]
+
 
 ## インストール
 
@@ -230,5 +234,5 @@ print(text);
   [2]: http://www.amunsnet.com/soft/clibor_macro.html
   [3]: http://polygonpla.net/
   [4]: http://twitter.com/polygon_planet
-
+  [5]: https://github.com/polygonplanet/Clibor-Macro-for-JavaScript/archive/master.zip
 
