@@ -17,7 +17,7 @@ Python を入れてない場合、[公式の解説][2] 通りにインストー�
 
 ## ダウンロード
 
-[jsmacro.zip][5]
+[Clibor-Macro-for-JavaScript.zip][5]
 
 
 ## インストール
@@ -53,12 +53,16 @@ rem -------------------------------
 
 ```javascript
 #<$C_CLB_PYTHON/>
-alert('test'.toUpperCase());
+alert(' hello   world  !'.split(/\s+/).filter(function(s) {
+  return s;
+}).map(function(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}).join(' '));
 ```
 
 1行目は、本来 Python で動くのをトラップするために必要です。
 
-`'TEST'` とアラートが表示されれば成功です。
+`'Hello World !'` とアラートが表示されれば成功です。
 
 ※環境により、alert が最前面にならないかもしれません
 
