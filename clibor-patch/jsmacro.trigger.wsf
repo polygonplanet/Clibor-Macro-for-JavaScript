@@ -1,0 +1,1021 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<package>
+<job id="clibor-jsmacro-trigger">
+<?job error="true" debug="false" ?>
+<runtime/>
+<script type="text/javascript" charset="utf-8"><![CDATA[
+/*
+ * Clibor JavaScript Macro Trigger
+ */
+(function (global) {
+
+  var MACRO_FILE = WScript.Arguments.Item(0);
+
+
+  /**
+   * Definition of ECMAScript 5 and ES6 prototype methods.
+   */
+  var defineProto = function() {
+
+    /**
+     * Array.prototype ECMAScript 5th functions
+     * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array
+     */
+    if (!Array.prototype.forEach) {
+      Array.prototype.forEach = function (fn, scope) {
+        var i, len;
+        for (i = 0, len = this.length; i < len; ++i) {
+          if (i in this) {
+            fn.call(scope, this[i], i, this);
+          }
+        }
+      };
+    }
+
+    if (!Array.prototype.every) {
+      Array.prototype.every = function(fun /*, thisp */) {
+        var t, len, i, thisp;
+
+        if (this == null) {
+          throw new TypeError();
+        }
+        t = Object(this);
+        len = t.length >>> 0;
+        if (typeof fun !== 'function') {
+            throw new TypeError();
+        }
+        thisp = arguments[1];
+        for (i = 0; i < len; i++) {
+          if (i in t && !fun.call(thisp, t[i], i, t)) {
+            return false;
+          }
+        }
+        return true;
+      };
+    }
+
+    if (!Array.prototype.some) {
+      Array.prototype.some = function(fun /*, thisp */) {
+        if (this == null) {
+          throw new TypeError();
+        }
+        var thisp, i,
+            t = Object(this),
+            len = t.length >>> 0;
+        if (typeof fun !== 'function') {
+          throw new TypeError();
+        }
+        thisp = arguments[1];
+        for (i = 0; i < len; i++) {
+          if (i in t && fun.call(thisp, t[i], i, t)) {
+            return true;
+          }
+        }
+        return false;
+      };
+    }
+
+    if (!Array.prototype.filter) {
+      Array.prototype.filter = function(fun /*, thisp*/) {
+        if (!this) {
+          throw new TypeError();
+        }
+        var objects = Object(this);
+        var len = objects.length >>> 0;
+        if (typeof fun !== 'function') {
+          throw new TypeError();
+        }
+        var res = [];
+        var thisp = arguments[1];
+        for (var i in objects) {
+          if (objects.hasOwnProperty(i)) {
+            if (fun.call(thisp, objects[i], i, objects)) {
+              res.push(objects[i]);
+            }
+          }
+        }
+        return res;
+      };
+    }
+
+    /**
+     * Production steps of ECMA-262, Edition 5, 15.4.4.19
+     * Reference: http://es5.github.com/#x15.4.4.19
+     */
+    if (!Array.prototype.map) {
+      Array.prototype.map = function(callback, thisArg) {
+        var T, A, k;
+
+        if (this == null) {
+          throw new TypeError('this is null or not defined');
+        }
+        var O = Object(this);
+        var len = O.length >>> 0;
+        if (typeof callback !== 'function') {
+          throw new TypeError(callback + ' is not a function');
+        }
+        if (thisArg) {
+          T = thisArg;
+        }
+        A = new Array(len);
+        k = 0;
+        while (k < len) {
+          var kValue, mappedValue;
+         if (k in O) {
+            kValue = O[k];
+            mappedValue = callback.call(T, kValue, k, O);
+            A[k] = mappedValue;
+          }
+          k++;
+        }
+        return A;
+      };
+    }
+
+    if (!Array.prototype.reduce) {
+      Array.prototype.reduce = function(callback, opt_initialValue) {
+        if (null === this || 'undefined' === typeof this) {
+          throw new TypeError('Array.prototype.reduce called on null or undefined');
+        }
+        if ('function' !== typeof callback) {
+          throw new TypeError(callback + ' is not a function');
+        }
+        var index, value,
+            length = this.length >>> 0,
+            isValueSet = false;
+        if (1 < arguments.length) {
+          value = opt_initialValue;
+          isValueSet = true;
+        }
+        for (index = 0; length > index; ++index) {
+          if (this.hasOwnProperty(index)) {
+            if (isValueSet) {
+              value = callback(value, this[index], index, this);
+            } else {
+              value = this[index];
+              isValueSet = true;
+            }
+          }
+        }
+        if (!isValueSet) {
+          throw new TypeError('Reduce of empty array with no initial value');
+        }
+        return value;
+      };
+    }
+
+    if (!Array.prototype.reduceRight) {
+      Array.prototype.reduceRight = function(callback, opt_initialValue) {
+        if (null === this || 'undefined' === typeof this) {
+          throw new TypeError('Array.prototype.reduceRight called on null or undefined');
+        }
+        if ('function' !== typeof callback) {
+          throw new TypeError(callback + ' is not a function');
+        }
+        var index, value,
+            length = this.length >>> 0,
+            isValueSet = false;
+        if (1 < arguments.length) {
+          value = opt_initialValue;
+          isValueSet = true;
+        }
+        for (index = length - 1; -1 < index; --index) {
+          if (!this.hasOwnProperty(index)) {
+            if (isValueSet) {
+              value = callback(value, this[index], index, this);
+            } else {
+              value = this[index];
+              isValueSet = true;
+            }
+          }
+        }
+        if (!isValueSet) {
+          throw new TypeError('Reduce of empty array with no initial value');
+        }
+        return value;
+      };
+    }
+
+    if (!Array.prototype.indexOf) {
+      Array.prototype.indexOf = function (searchElement /*, fromIndex */) {
+        if (this == null) {
+          throw new TypeError();
+        }
+        var t = Object(this);
+        var len = t.length >>> 0;
+
+        if (len === 0) {
+          return -1;
+        }
+        var n = 0;
+
+        if (arguments.length > 0) {
+          n = Number(arguments[1]);
+
+          if (n != n) {
+            n = 0;
+          } else if (n != 0 && n != Infinity && n != -Infinity) {
+             n = (n > 0 || -1) * Math.floor(Math.abs(n));
+          }
+        }
+
+        if (n >= len) {
+          return -1;
+        }
+
+        var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
+
+        for (; k < len; k++) {
+          if (k in t && t[k] === searchElement) {
+            return k;
+          }
+        }
+        return -1;
+      };
+    }
+
+    if (!Array.prototype.lastIndexOf) {
+      Array.prototype.lastIndexOf = function(searchElement /*, fromIndex*/) {
+        if (this == null) {
+          throw new TypeError();
+        }
+
+        var n, k,
+            t = Object(this),
+            len = t.length >>> 0;
+        if (len === 0) {
+          return -1;
+        }
+
+        n = len;
+        if (arguments.length > 1) {
+          n = Number(arguments[1]);
+          if (n != n) {
+            n = 0;
+          }
+          else if (n != 0 && n != (1 / 0) && n != -(1 / 0)) {
+            n = (n > 0 || -1) * Math.floor(Math.abs(n));
+          }
+        }
+
+        for (k = n >= 0
+              ? Math.min(n, len - 1)
+              : len - Math.abs(n); k >= 0; k--) {
+          if (k in t && t[k] === searchElement) {
+            return k;
+          }
+        }
+        return -1;
+      };
+    }
+
+    /**
+     * Fixed, provide at least first 2 parameters to splice().
+     */
+    (function() {
+      var originalSplice = Array.prototype.splice;
+      Array.prototype.splice = function(start, deleteCount) {
+        var args = Array.prototype.slice.call(arguments);
+        if (deleteCount === void 0) {
+          args[1] = this.length - start;
+        }
+        return originalSplice.apply(this, args);
+      };
+    }());
+
+    /**
+     * https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Function/bind
+     * http://constellation.hatenablog.com/entry/20110113/1294846327
+     */
+    if (!Function.prototype.bind) {
+      Function.prototype.bind = function(thisArg) {
+        if (typeof this !== 'function') {
+          throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+        }
+        var that = this;
+        var args = Array.prototype.slice.call(arguments, 1);
+        var bound = function() {
+          var a = args.concat(Array.prototype.slice.call(arguments));
+          if (Object.getPrototypeOf(this) !== bound.prototype) {
+            return that.apply(thisArg, a);
+          }
+          switch (a.length) {
+            case 0: return new that();
+            case 1: return new that(a[0]);
+            case 2: return new that(a[0], a[1]);
+            case 3: return new that(a[0], a[1], a[2]);
+            default:
+              var p = [];
+              for (var i = 0, len = a.length; i < len; i++) {
+                p.push('a[' + i + ']');
+              }
+              return ('evil', eval)('new that(' + p.join(',') + ')');
+          }
+        };
+        return bound;
+      };
+    }
+
+    /**
+     * ECMAScript 5th Edition Array.isArray
+     * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
+     */
+    if (!Array.isArray) {
+      Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+      };
+    }
+
+    /**
+     * ECMAScript 5th Edition Date.now
+     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
+     */
+    if (!Date.now) {
+      Date.now = function() {
+        return +new Date();
+      };
+    }
+
+    /**
+     * String.prototype ECMAScript 5th functions.
+     * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String
+     */
+    if (!String.prototype.trim) {
+      String.prototype.trim = function () {
+        return this.replace(/^\s+|\s+$/g, '');
+      };
+    }
+
+    if (!String.prototype.trimRight) {
+      String.prototype.trimRight = function () {
+        return this.replace(/\s+$/, '');
+      };
+    }
+
+    if (!String.prototype.trimLeft) {
+      String.prototype.trimLeft = function () {
+        return this.replace(/^\s+/, '');
+      };
+    }
+
+    if (!String.prototype.contains) {
+      String.prototype.contains = function(str, startIndex) {
+        return -1 !== String.prototype.indexOf.call(this, str, startIndex);
+      };
+    }
+
+    if (!String.prototype.startsWith) {
+      String.prototype.startsWith = function(searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+      };
+    }
+
+    if (!String.prototype.endsWith) {
+      String.prototype.endsWith = function(searchString, position) {
+        position = position || this.length;
+        position = position - searchString.length;
+        return this.lastIndexOf(searchString) === position;
+      };
+    }
+
+    /**
+     * Object.prototype ECMAScript 5th - Harmony Polyfill
+     * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object
+     */
+    if (!Object.create) {
+      Object.create = function (o) {
+        if (arguments.length > 1) {
+          throw new Error('Object.create implementation only accepts the first parameter.');
+        }
+        var F = function(){};
+        F.prototype = o;
+        return new F();
+      };
+    }
+
+    if (!Object.keys) {
+      Object.keys = (function() {
+        var hasOwnProperty = Object.prototype.hasOwnProperty,
+            hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
+            dontEnums = [
+              'toString',
+              'toLocaleString',
+              'valueOf',
+              'hasOwnProperty',
+              'isPrototypeOf',
+              'propertyIsEnumerable',
+              'constructor'
+            ],
+            dontEnumsLength = dontEnums.length;
+
+        return function(obj) {
+          if (typeof obj !== 'object' && typeof obj !== 'function' || obj === null) {
+            throw new TypeError('Object.keys called on non-object');
+          }
+          var result = []
+          for (var prop in obj) {
+            if (hasOwnProperty.call(obj, prop)) {
+              result.push(prop);
+            }
+          }
+          if (hasDontEnumBug) {
+            for (var i = 0; i < dontEnumsLength; i++) {
+              if (hasOwnProperty.call(obj, dontEnums[i])) {
+                result.push(dontEnums[i]);
+              }
+            }
+          }
+          return result;
+        };
+      }());
+    };
+
+    /**
+     * via http://ejohn.org/blog/objectgetprototypeof/
+     */
+    if (!Object.getPrototypeOf) {
+      if (typeof 'test'.__proto__ === 'object') {
+        Object.getPrototypeOf = function(object) {
+          return object.__proto__;
+        };
+      } else {
+        Object.getPrototypeOf = function(object) {
+          // May break if the constructor has been tampered with
+          return object.constructor.prototype;
+        };
+      }
+    }
+
+    /**
+     * https://developer.mozilla.org/ja/docs/JavaScript/Reference/Global_Objects/JSON
+     */
+    (function(global) {
+      if (!global.JSON) {
+        global.JSON = {
+          parse: function(json) {
+            return ('evil', eval)('(' + json + ')');
+          },
+          stringify: function(content) {
+            if (content instanceof Object) {
+              var output = '';
+              if (content.constructor === Array) {
+                for (var id = 0; id < content.length; output += this.stringify(content[id]) + ',', id++);
+                return '[' + output.substr(0, output.length - 1) + ']';
+              }
+              if (content.toString !== Object.prototype.toString) {
+                return '"' + content.toString().replace(/"/g, '\\$&') + '"';
+              }
+              for (var prop in content) {
+                output += '"' + prop.replace(/"/g, '\\$&') + '":' + this.stringify(content[prop]) + ',';
+              }
+              return '{' + output.substr(0, output.length - 1) + '}';
+            }
+            return typeof content === 'string' ? '"' + content.replace(/"/g, '\\$&') + '"' : String(content);
+          }
+        };
+      }
+    }((function() { return this; }()) || {}));
+  };
+
+  defineProto();
+
+
+  /**
+   * Define a helper builtin objects.
+   */
+  var sandbox = (function define_sandbox() {
+
+    var toSource = Function.prototype.toString;
+    var toString = Object.prototype.toString;
+    var typeBrackets = toString.call(Object()).split('Object');
+
+    var builtinToString = (function() {
+      var re = /^\s*(function)[^()]*([()][^{}]*?)\s*\{[\s\S]*\}[\s\S]*$/;
+      var to = '$1 $2 {\n    [native code]\n}';
+      var toString = function() {
+        return toSource.call(this).replace(re, to);
+      };
+      return toString.toString = toString, toString;
+    }());
+
+    var defineBuiltin = function(name, target, proto) {
+      try {
+        if (typeof target === 'function') {
+          target.toString = builtinToString;
+        } else {
+          name = typeBrackets.join(name.charAt(0).toUpperCase() + name.slice(1));
+          target.toString = function() { return name; };
+        }
+
+        if (proto) {
+          target.prototype = defineBuiltin(name, proto);
+        }
+      } catch (e) {}
+      return target;
+    };
+
+    var mixin = function(target) {
+      Array.prototype.slice.call(arguments, 1).forEach(function(source) {
+        for (var p in source) {
+          if (source === source[p]) {
+            continue;
+          }
+          try {
+            target[p] = source[p];
+          } catch (e) {}
+        }
+      });
+      return target;
+    };
+
+
+    /**
+     * Sandbox object for clibor macro.
+     */
+    var sandbox = {
+      _scriptStartTime: Date.now(),
+      scope: defineBuiltin('CliborWindow', {}),
+
+      buildSource: function(script) {
+        var toFunc = function(fn) {
+          return toSource.call(fn).replace(/^[\s()]+|[\s();]+$/g, '');
+        };
+
+        var proto = toFunc(defineProto);
+        var sbx = toFunc(define_sandbox);
+
+        var esc = /([\u0008\u0009\u000A\u000B\u000C\u000D\u0020\u0022\u0027\u005C\u00A0\u2028\u2029\uFEFF])/g;
+        var src = script.replace(esc, function(a, c) {
+          return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
+        });
+
+        return [
+          '(' + proto + ')();',
+          '(' + sbx + ')().runScript("' + src + '");',
+        ].join('\n');
+      },
+      /**
+       * Maximum seconds of script run.
+       */
+      _maxScriptRunTime: 30 * 1000,
+
+      _gc: function() {
+        try {
+          CollectGarbage();
+        } catch (e) {}
+      },
+
+      _isTimeOver: function() {
+        return Date.now() - this._scriptStartTime > this._maxScriptRunTime;
+      },
+
+      _waitProcess: function() {
+        while (!this._isTimeOver() && (this.timers.length || this.intervals.length)) {
+          WScript.Sleep(((Math.random() * 200) % 180) + 20);
+        }
+      },
+
+      _originalClip: null,
+      _restoreClip: function() {
+        if (this._originalClip !== null) {
+          Clipboard.set(this._originalClip);
+        }
+      },
+
+      _terminate: function() {
+        this._waitProcess();
+        this._restoreClip();
+
+        var id;
+        for (id in this.timers.ids) {
+          this._win.clearTimeout(id);
+        }
+        for (id in this.intervals.ids) {
+          this._win.clearInterval(id);
+        }
+
+        this._gc();
+
+        var p;
+        for (p in this.scope) {
+          if (this.scope[p] === this.scope) {
+            continue;
+          }
+          try {
+            delete this.scope[p];
+          } catch (e) {}
+        }
+        for (p in this) {
+          if (p.charAt(0) !== '_') {
+            delete this[p];
+          }
+        }
+
+        ['_doc', '_win', '_html'].forEach(function(p) {
+          this[p] && (this[p] = null, delete this[p]);
+        }, this);
+
+        try {
+          global['window'] && delete global['window'];
+        } catch (e) {}
+
+        WScript.Quit();
+      }
+    };
+
+    mixin(sandbox, {
+      mixin: mixin,
+      defineBuiltin: defineBuiltin
+    });
+
+
+    var getFSO = function() {
+      return new ActiveXObject('Scripting.FileSystemObject');
+    };
+
+    var getStream = function() {
+      return new ActiveXObject('ADODB.Stream');
+    };
+
+    var withStream = function(stream, func) {
+      var args = Array.prototype.slice.call(arguments, 2);
+      var result;
+
+      try {
+        result = func.apply(stream, args);
+      } catch (e) {
+        throw e;
+      } finally {
+        stream && stream.Close && stream.Close();
+        stream = null;
+      }
+      return result;
+    };
+
+    /**
+     * Local file utility
+     */
+    var LocalFile = sandbox.scope.LocalFile = defineBuiltin('LocalFile', function(fileName) {
+      this.fileName = fileName;
+    }, {
+      fileName: null,
+      charset: 'UTF-8',
+
+      create: function(overwrite) {
+        return getFSO().CreateTextFile(this.fileName, !!overwrite || true);
+      },
+      exists: function() {
+        return getFSO().FileExists(this.fileName);
+      },
+      remove: function(force) {
+        return getFSO().DeleteFile(this.fileName, !!force || true);
+      },
+      getSize: function() {
+        return getFSO().GetFile(this.fileName).size;
+      },
+      copy: function(to, overwrite) {
+        return getFSO().CopyFile(this.fileName, to, !!overwrite || true);
+      },
+      move: function(to) {
+        return getFSO().MoveFile(this.fileName, to);
+      },
+      read: function(charset) {
+        charset || (charset = this.charset);
+        var fileName = this.fileName;
+
+        return withStream(getStream(), function() {
+          this.Type = 2;
+          this.Charset = charset;
+          this.Open();
+          this.LoadFromFile(fileName);
+          return this.ReadText(-1);
+        });
+      },
+      write: function(text, charset) {
+        charset || (charset = this.charset);
+        var fileName = this.fileName;
+
+        withStream(getStream(), function() {
+          this.Type = 2;
+          this.Charset = charset;
+          this.Open();
+          this.WriteText(text, 1);
+          this.SaveToFile(fileName, 2);
+        });
+
+        if (!/^UTF-?8$/i.test(charset)) {
+          return this;
+        }
+
+        /* Skip UTF-8 BOM */
+        var binary = withStream(getStream(), function() {
+          this.Type = 1;
+          this.Open();
+          this.LoadFromFile(fileName);
+          this.Position = 3;
+          return this.Read();
+        });
+
+        return withStream(getStream(), function() {
+          this.Type = 1;
+          this.Open();
+          this.Write(binary);
+          this.SaveToFile(fileName, 2);
+        }), this;
+      }
+    });
+
+
+    /**
+     * Let definitions of basic DOM functions.
+     */
+    (function define_dom() {
+      sandbox._html = new ActiveXObject('htmlfile');
+      sandbox._html.write([
+        '<html>',
+        '<head>',
+        '<meta http-equiv=content-type content="text/html; charset=utf-8">',
+        '</head>',
+        '<body>\u6587\u5b57\u30b3\u30fc\u30c9</body>', /* dummy for unicode */
+        '</html>'
+      ].join(''));
+
+      sandbox._win = sandbox._html.parentWindow;
+      sandbox._doc = sandbox._win.document;
+      sandbox.doc = defineBuiltin('CliborDocument', {});
+
+      sandbox._win.ActiveXObject = ActiveXObject;
+
+      var alert = defineBuiltin('alert', function(msg) {
+        return sandbox._win.alert(msg);
+      });
+
+      var confirm = defineBuiltin('confirm', function(msg) {
+        return sandbox._win.confirm(msg);
+      });
+
+      var prompt = defineBuiltin('prompt', function(text, value) {
+        return sandbox._win.prompt(text, value);
+      });
+
+      sandbox.timers = {
+        ids: {},
+        length: 0
+      };
+
+      var setTimeout = defineBuiltin('setTimeout', function(func, delay) {
+        var id = sandbox._win.setTimeout(function() {
+          delete sandbox.timers.ids[id], sandbox.timers.length--;
+          func.apply(this, arguments);
+        }, delay);
+        return sandbox.timers.length++, sandbox.timers.ids[id] = id;
+      });
+
+      var clearTimeout = defineBuiltin('clearTimeout', function(id) {
+        if (id in sandbox.timers.ids) {
+          delete sandbox.timers.ids[id], sandbox.timers.length--;
+        }
+        return sandbox._win.clearTimeout(id);
+      });
+
+      sandbox.intervals = {
+        ids: {},
+        length: 0
+      };
+
+      var setInterval = defineBuiltin('setInterval', function(func, interval) {
+        var id = sandbox._win.setInterval(func, interval);
+        return sandbox.intervals.length++, sandbox.intervals.ids[id] = id;
+      });
+
+      var clearInterval = defineBuiltin('clearInterval', function(id) {
+        if (id in sandbox.intervals.ids) {
+          delete sandbox.intervals.ids[id], sandbox.intervals.length--;
+        }
+        return sandbox._win.clearInterval(id);
+      });
+
+      var XMLHttpRequest = defineBuiltin('XMLHttpRequest', function() {
+        if (typeof global.XMLHttpRequest === 'function') {
+          return new global.XMLHttpRequest();
+        }
+        return new ActiveXObject('Microsoft.XMLHTTP');
+      });
+
+
+      var dom = {
+        alert: alert,
+        confirm: confirm,
+        prompt: prompt,
+        setTimeout: setTimeout,
+        clearTimeout: clearTimeout,
+        setInterval: setInterval,
+        clearInterval: clearInterval,
+        XMLHttpRequest: XMLHttpRequest
+      };
+
+      mixin(sandbox.scope, dom);
+      mixin(global, dom);
+      dom = null;
+
+      sandbox.scope.document = sandbox.doc;
+      sandbox.scope['window'] = sandbox.scope['this'] = sandbox.scope;
+
+      try {
+        global['window'] = sandbox.scope;
+      } catch (e) {}
+    }());
+
+
+    sandbox.runScript = function(script) {
+      try {
+        Function('with(this){' + script + '}').call(this.scope);
+      } catch (e) {
+        WScript.Echo('Error: ' + e.message);
+      } finally {
+        /**
+         * Shutdown script if running.
+         */
+        sandbox._terminate();
+      }
+    };
+
+
+    /**
+     * Force GarbageCollect
+     */
+    var CollectGarbage_ = typeof CollectGarbage === 'function' && CollectGarbage;
+    sandbox.scope.gc = defineBuiltin('gc', function() {
+      CollectGarbage_ && CollectGarbage_();
+    });
+
+
+    var sleep = sandbox.scope.sleep = defineBuiltin('sleep', function(msec) {
+      return WScript.Sleep(msec), msec;
+    });
+
+
+    /**
+     * Clipboard utility object
+     */
+    var Clipboard = sandbox.scope.Clipboard = (function() {
+
+      var getCurrentPath = function() {
+        var batchDir = WScript.ScriptFullName.split(/[\/\\]/).slice(0, -1).join('/');
+        var appDir = batchDir.split('/').slice(0, -1).join('/');
+        var batFile = appDir + '/jsmacro.clip.bat';
+        var tmpFile = batchDir + '/jsmacro.tmpclip.txt';
+        return {
+          batchDir: batchDir,
+          appDir: appDir,
+          batFile: batFile,
+          tmpFile: tmpFile
+        };
+      };
+
+
+      var exec = function(cmd) {
+        return WScript.CreateObject('WScript.Shell').Run(cmd, 0, true);
+      };
+
+
+      var Clipboard = {};
+
+      /**
+       * Get text from clipboard
+       */
+      Clipboard.get = defineBuiltin('get', function() {
+        var path = getCurrentPath();
+        exec(path.batFile + ' get');
+        sleep(10);
+
+        var file = new LocalFile(path.tmpFile);
+        var content = file.read();
+
+        file.remove(), file = null;
+        return content;
+      });
+
+      /**
+       * Set text to clipboard
+       */
+      Clipboard.set = defineBuiltin('set', function(text) {
+        var path = getCurrentPath();
+        var file = new LocalFile(path.tmpFile);
+
+        file.write(text);
+        exec(path.batFile + ' set');
+        sleep(10);
+        file.remove(), file = null;
+        return this;
+      });
+
+
+      [['copy', '^c', 20], ['paste', '^v', 500], ['cut', '^x', 20]].forEach(function(item) {
+        var name = item[0];
+        var key  = item[1];
+        var time = item[2];
+
+        Clipboard[name] = defineBuiltin(name, function() {
+          sleep(time);
+          WScript.CreateObject('WScript.Shell').SendKeys(key);
+          return this;
+        });
+      });
+
+      return defineBuiltin('Clipboard', Clipboard);
+    }());
+
+
+    var withClipboard = sandbox.scope.withClipboard = defineBuiltin('withClipboard', function(fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+
+      if (sandbox._originalClip === null) {
+        sandbox._originalClip = Clipboard.get();
+      }
+
+      return fn.apply(Clipboard.set(''), args);
+    });
+
+
+    sandbox.scope.getSelectedText = defineBuiltin('getSelectedText', function() {
+      return withClipboard(function() {
+        this.copy();
+        sleep(10);
+        return this.get();
+      });
+    });
+
+
+    sandbox.scope.print = defineBuiltin('print', function(text) {
+      withClipboard(function() {
+        if (text) {
+          this.set(text);
+          sleep(10);
+          this.paste();
+        }
+      });
+    });
+
+    return sandbox;
+  }());
+
+
+  /**
+   * Clibor Clipboard's Macro constructor
+   */
+  var Macro = sandbox.defineBuiltin('Macro', function(fileName) {
+    this.fileName = fileName;
+  }, {
+    WSF_TEMPLATE: [
+      '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>',
+      '<package>',
+        '<job id="clibor-jsmacro">',
+          '<?job error="true" debug="false" ?>',
+          '<runtime/>',
+          '<script type="text/javascript">',
+          '<!' + '[CDATA[',
+          '(function (global) {',
+            '{SCRIPT}',
+          '}(this));',
+          ']]' + '>',
+          '</script>',
+        '</job>',
+      '</package>'
+    ],
+
+    fileName: null,
+
+    clean: function(source) {
+      return [
+        /[\u001A\u2028\u2029]+/g,
+        /^[\x09\x20]*(?:#.*|)$/gm,
+        /^[\x09\x20]+|[\x09\x20]+$/gm
+      ].reduce(function(source, re) {
+        return source.replace(re, '');
+      }, source);
+    },
+
+    ensure: function(sandbox) {
+      var file = new sandbox.scope.LocalFile(this.fileName);
+      var source = this.clean(file.read());
+      var content = this.WSF_TEMPLATE.join('\n').replace('{SCRIPT}', sandbox.buildSource(source));
+
+      return file.write(content), file = source = content = null, this;
+    },
+
+    trigger: function() {
+      WScript.CreateObject('WScript.Shell').Run(this.fileName, 1, false);
+      this.fileName = this.WSF_TEMPLATE = null;
+    }
+  });
+
+
+  new Macro(MACRO_FILE).ensure(sandbox).trigger();
+
+}(this || (function() { return this; }()) || {}));
+]]>
+</script>
+</job>
+</package>
