@@ -109,16 +109,18 @@ JavaScript としては非常に古く、ECMAScript の仕様にもあまり準�
  - gc : function () : 強制的に gc (garbage collect) します。通常は必要ありません
 
 
-以下は標準のDOM と同じに扱えます (IE仕様)
+以下は標準のDOM と同じに扱えます ( IE仕様 ※1 )
 
  - alert : function (msg)
  - confirm : function (msg)
- - prompt : function (text, value) ※動かない可能性あり※
  - setTimeout : function (func, delay)
  - clearTimeout : function (id)
  - setInterval : function (func, interval)
  - clearInterval : function (id)
  - XMLHttpRequest : constructor function ()
+
+
+※1: IE仕様なのは、ActiveXObject('htmlfile') を使っているためです
 
 
 ## サンプル
@@ -225,6 +227,88 @@ print(text);
     こんにちは！
     ようこそ！私のホームページへ！
 
+
+----
+選択範囲のコードをJSLint
+
+```javascript
+#<$C_CLB_PYTHON/>
+/*JSLINT*/
+
+var source = getSelectedText();
+if (!source.trim()) {
+  return;
+}
+
+var JSLINT_URL = 'http://jslint-for-wsh.googlecode.com/svn/trunk/jslint-for-wsh.js';
+var JSLINT_FILE = JSLINT_URL.split('/').pop();
+
+var options = {
+   windows    : true,  // WScript is allowed
+   white      : true,  // true: "sloppy" whitespace is ok
+   plusplus   : true,  // true == ok to use ++
+   properties : false, // do not barf on any undeclared properties
+   passfail   : false, // do not stop after first error
+   radix      : true   // do not puke on parseInt() with no radix
+};
+
+var code;
+var file = new LocalFile(JSLINT_FILE);
+if (!file.exists()) {
+  // ファイルがなければダウンロードして保存
+  file.write(code = download(JSLINT_URL));
+} else {
+  code = file.read();
+}
+file = null;
+
+eval(code);
+code = null;
+
+alert(lint(source));
+
+
+function download(url) {
+  var req = new XMLHttpRequest();
+  req.open('GET', url, false);
+  req.send(null);
+  return req.responseText.replace(
+    /([{}()\s]+;)\s*\(\s*function\s*[()\s]+\{[\s\S]*[}();\s]+$/,
+    '$1'
+  );
+}
+
+function lint(code) {
+  if (!JSLINT(code, options)) {
+    return JSLINT.errors.reduce(function(err, e) {
+      return (e && err.push([
+        'line: ' + (e.line || 0),
+        'pos: ' + e.character,
+        'JSLINT: ' + e.reason +
+        '\n    ' + (e.evidence || '').trim()
+      ].join(', '))), err;
+    }, []).join('\n');
+  }
+  return 'no error';
+}
+```
+
+例:
+
+下のコードを選択して実行
+
+```javascript
+var a = 1, 2, 3;
+```
+
+↓
+
+
+```javascript
+line: 1, pos: 12, JSLINT: Expected an identifier and instead saw '2'.
+    var a = 1, 2, 3;
+line: 1, pos: 12, JSLINT: Stopping.  (100% scanned).
+```
 
 
 
