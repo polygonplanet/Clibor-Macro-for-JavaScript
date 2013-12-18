@@ -441,7 +441,7 @@
         };
       } else {
         Object.getPrototypeOf = function(object) {
-          // May break if the constructor has been tampered with
+          /* May break if the constructor has been tampered with */
           return object.constructor.prototype;
         };
       }
@@ -572,7 +572,7 @@
 
       _waitProcess: function() {
         while (!this._isTimeOver() && (this.timers.length || this.intervals.length)) {
-          WScript.Sleep(((Math.random() * 200) % 180) + 20);
+          sleep(((Math.random() * 200) % 180) + 20);
         }
       },
 
@@ -620,6 +620,8 @@
           global['window'] && delete global['window'];
         } catch (e) {}
 
+        /* Activate alert/popup window by waiting exits process. */
+        sleep(5000);
         WScript.Quit();
       }
     };
@@ -629,6 +631,10 @@
       defineBuiltin: defineBuiltin
     });
 
+
+    var getShell = function() {
+      return new ActiveXObject('WScript.Shell');
+    };
 
     var getFSO = function() {
       return new ActiveXObject('Scripting.FileSystemObject');
@@ -662,26 +668,57 @@
       fileName: null,
       charset: 'UTF-8',
 
+      /* Abstract methods for open and close. (not require) */
+      open: function(fileName) {
+        return (fileName && (this.fileName = fileName)), this;
+      },
+      close: function() {
+        return this.fileName = null, this;
+      },
+
       create: function(overwrite) {
-        return getFSO().CreateTextFile(this.fileName, !!overwrite || true);
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.CreateTextFile(fileName, !!overwrite || true);
+        });
       },
       exists: function() {
-        return getFSO().FileExists(this.fileName);
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.FileExists(fileName);
+        });
       },
       remove: function(force) {
-        return getFSO().DeleteFile(this.fileName, !!force || true);
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.DeleteFile(fileName, !!force || true);
+        });
       },
       getSize: function() {
-        return getFSO().GetFile(this.fileName).size;
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.GetFile(fileName).size;
+        });
       },
       copy: function(to, overwrite) {
-        return getFSO().CopyFile(this.fileName, to, !!overwrite || true);
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.CopyFile(fileName, to, !!overwrite || true);
+        });
       },
       move: function(to) {
-        return getFSO().MoveFile(this.fileName, to);
+        var fileName = this.fileName;
+        return withStream(getFSO(), function() {
+          return this.MoveFile(fileName, to);
+        });
       },
       read: function(charset) {
-        charset || (charset = this.charset);
+        if (/^_?auto/i.test(charset)) {
+          charset = '_autodetect_all';
+        } else {
+          charset || (charset = this.charset);
+        }
+
         var fileName = this.fileName;
 
         return withStream(getStream(), function() {
@@ -693,7 +730,12 @@
         });
       },
       write: function(text, charset) {
-        charset || (charset = this.charset);
+        if (/^_?auto/i.test(charset)) {
+          charset = '_autodetect_all';
+        } else {
+          charset || (charset = this.charset);
+        }
+
         var fileName = this.fileName;
 
         withStream(getStream(), function() {
@@ -745,18 +787,58 @@
       sandbox._doc = sandbox._win.document;
       sandbox.doc = defineBuiltin('CliborDocument', {});
 
+      (function(fullPath) {
+        var href = sandbox.location = new String(fullPath);
+        var parts = href.split(/[\/\\]/);
+
+        mixin(sandbox.location, {
+          hash: '',
+          host: parts[1],
+          hostname: parts[1],
+          pathname: '\\' + parts.slice(2),
+          port: void 0,
+          protocol: parts[0],
+          search: '',
+          href: href
+        });
+      }(WScript.ScriptFullName));
+
       sandbox._win.ActiveXObject = ActiveXObject;
 
+
       var alert = defineBuiltin('alert', function(msg) {
-        return sandbox._win.alert(msg);
+        /* //sandbox._win.alert(msg);
+         *
+         * Use WScript.Echo to activate dialog.
+         */
+        WScript.Echo(msg);
       });
+
+
+      var SYMBOL = {};
 
       var confirm = defineBuiltin('confirm', function(msg) {
-        return sandbox._win.confirm(msg);
+        var res = SYMBOL;
+
+        res = sandbox._win.confirm(msg);
+
+        while (res === SYMBOL) {
+          sleep(50);
+        }
+        return res;
       });
 
+
+      /*FIXME: Unable to popup prompt. */
       var prompt = defineBuiltin('prompt', function(text, value) {
-        return sandbox._win.prompt(text, value);
+        var res = SYMBOL;
+
+        res = sandbox._win.prompt(text, value);
+
+        while (res === SYMBOL) {
+          sleep(50);
+        }
+        return res;
       });
 
       sandbox.timers = {
@@ -820,6 +902,7 @@
       dom = null;
 
       sandbox.scope.document = sandbox.doc;
+      sandbox.scope.location = sandbox.location;
       sandbox.scope['window'] = sandbox.scope['this'] = sandbox.scope;
 
       try {
@@ -856,6 +939,29 @@
     });
 
 
+    /*
+     * cf. http://msdn.microsoft.com/ja-jp/library/cc364421.aspx
+     */
+    var exec = sandbox.scope.exec = defineBuiltin('exec', function(cmd, winStyle, async) {
+      return getShell().Run(cmd, winStyle | 0, !async);
+    });
+
+
+    /*
+     * cf. http://msdn.microsoft.com/ja-jp/library/cc364423.aspx
+     */
+    var sendKeys = sandbox.scope.sendKeys = defineBuiltin('sendKeys', function(keys) {
+      var sh = getShell();
+
+      Array.prototype.slice.call(arguments).forEach(function(key) {
+        sleep(30);
+        sh.SendKeys(key);
+      });
+
+      sh = null;
+    });
+
+
     /**
      * Clipboard utility object
      */
@@ -872,11 +978,6 @@
           batFile: batFile,
           tmpFile: tmpFile
         };
-      };
-
-
-      var exec = function(cmd) {
-        return WScript.CreateObject('WScript.Shell').Run(cmd, 0, true);
       };
 
 
@@ -919,7 +1020,7 @@
 
         Clipboard[name] = defineBuiltin(name, function() {
           sleep(time);
-          WScript.CreateObject('WScript.Shell').SendKeys(key);
+          sendKeys(key);
           return this;
         });
       });
@@ -1006,7 +1107,7 @@
     },
 
     trigger: function() {
-      WScript.CreateObject('WScript.Shell').Run(this.fileName, 1, false);
+      sandbox.scope.exec(this.fileName, 1, true);
       this.fileName = this.WSF_TEMPLATE = null;
     }
   });
