@@ -879,9 +879,10 @@
       });
 
       var XMLHttpRequest = defineBuiltin('XMLHttpRequest', function() {
-        if (typeof global.XMLHttpRequest === 'function') {
-          return new global.XMLHttpRequest();
-        }
+        //if (typeof global.XMLHttpRequest === 'function') {
+        //  return new global.XMLHttpRequest();
+        //}
+        // native XMLHttpRequest can't load local file.
         return new ActiveXObject('Microsoft.XMLHTTP');
       });
 
