@@ -1,7 +1,7 @@
 @echo off
 
 rem ---Set your python directory---
-set PYTHON_DIR=I:\Python
+set PYTHON_DIR=C:\Python27
 rem -------------------------------
 
 set PYTHONHOME=%PYTHON_DIR%
