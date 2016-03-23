@@ -990,9 +990,17 @@
       Clipboard.get = defineBuiltin('get', function() {
         var path = getCurrentPath();
         exec(path.batFile + ' get');
-        sleep(10);
 
         var file = new LocalFile(path.tmpFile);
+
+        // Wait until flash the clipboard content to file
+        for (var i = 0; i < 1000; i++) {
+          if (file.exists()) {
+            break;
+          }
+          sleep(10);
+        }
+
         var content = file.read();
 
         file.remove(), file = null;
